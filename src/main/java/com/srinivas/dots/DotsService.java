@@ -162,14 +162,31 @@ public class DotsService {
         return game;
     }
 
+    public Game getBoard(final String id) throws DotsServiceException {
+        if (!id.equals(game.getGameId())) {
+            throw new DotsServiceException("Incorrect game ID queried");
+        }
+        return game;
+    }
+
+    public Game getState(final String id) throws DotsServiceException {
+        if (!id.equals(game.getGameId())) {
+            logger.info("Requested ID: " + id);
+            logger.info("Existing ID: " + game.getGameId());
+            throw new DotsServiceException("Incorrect game ID queried");
+        }
+        return game;
+    }
+
     //-----------------------------------------------------------------------------//
     // Helper Classes and Methods
     //-----------------------------------------------------------------------------//
 
     public static class DotsServiceException extends Exception {
-        public DotsServiceException(String message, Throwable cause) {
+        public DotsServiceException(final String message, final Throwable cause) {
             super(message, cause);
         }
+        public DotsServiceException(final String message) { super((message));}
     }
 
     /**

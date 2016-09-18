@@ -32,6 +32,27 @@ public class DotsController {
             return dotsService.createNewGame(request.body());
         }, new JsonTransformer());
 
+        get(API_CONTEXT + "/games/:gameid/board", "application/json", (request, response) -> {
+            try {
+                return dotsService.getBoard(request.params(":gameId"));
+            } catch (DotsService.DotsServiceException ex) {
+                logger.error(String.format("Invalid GameID", request.params(":gameId")));
+                response.status(404);
+                return Collections.EMPTY_MAP;
+            }
+        }, new JsonTransformer());
+
+        get(API_CONTEXT + "/games/:gameid/state", "application/json", (request, response) -> {
+            try {
+                logger.info("Requested game id: " + request.params(":gameId"));
+                return dotsService.getState(request.params(":gameId"));
+            } catch (DotsService.DotsServiceException ex) {
+                logger.error(String.format("Invalid GameID", request.params(":gameId")));
+                response.status(404);
+                return Collections.EMPTY_MAP;
+            }
+        }, new JsonTransformer());
+
         get(API_CONTEXT + "/todos/:id", "application/json", (request, response) -> {
             try {
                 return dotsService.find(request.params(":id"));

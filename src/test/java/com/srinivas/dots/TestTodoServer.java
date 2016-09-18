@@ -1,9 +1,7 @@
-package com.todoapp;
+package com.srinivas.dots;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import org.hamcrest.CustomTypeSafeMatcher;
-import org.hamcrest.Description;
 import org.sql2o.Connection;
 import org.sql2o.Sql2o;
 import org.sqlite.SQLiteDataSource;

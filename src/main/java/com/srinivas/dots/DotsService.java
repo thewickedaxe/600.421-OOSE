@@ -3,9 +3,10 @@
 // https://blog.openshift.com/developing-single-page-web-applications-using-java-8-spark-mongodb-and-angularjs/
 //-------------------------------------------------------------------------------------------------------------//
 
-package com.todoapp;
+package com.srinivas.dots;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sql2o.Connection;
@@ -15,11 +16,12 @@ import org.sql2o.Sql2oException;
 import javax.sql.DataSource;
 import java.util.List;
 
-public class TodoService {
+public class DotsService {
 
     private Sql2o db;
+    public Game game;
 
-    private final Logger logger = LoggerFactory.getLogger(TodoService.class);
+    private final Logger logger = LoggerFactory.getLogger(DotsService.class);
 
     /**
      * Construct the model with a pre-defined datasource. The current implementation
@@ -27,7 +29,7 @@ public class TodoService {
      *
      * @param dataSource
      */
-    public TodoService(DataSource dataSource) throws TodoServiceException {
+    public DotsService(DataSource dataSource) throws DotsServiceException {
         db = new Sql2o(dataSource);
 
         //Create the schema for the database if necessary. This allows this
@@ -39,7 +41,7 @@ public class TodoService {
             conn.createQuery(sql).executeUpdate();
         } catch(Sql2oException ex) {
             logger.error("Failed to create schema at startup", ex);
-            throw new TodoServiceException("Failed to create schema at startup", ex);
+            throw new DotsServiceException("Failed to create schema at startup", ex);
         }
     }
 
@@ -48,7 +50,7 @@ public class TodoService {
      *
      * @return List of all Todo entries
      */
-    public List<Todo> findAll() throws TodoServiceException {
+    public List<Todo> findAll() throws DotsServiceException {
         String sql = "SELECT * FROM item" ;
         try (Connection conn = db.open()) {
             List<Todo> todos =  conn.createQuery(sql)
@@ -57,29 +59,11 @@ public class TodoService {
                 .executeAndFetch(Todo.class);
             return todos;
         } catch(Sql2oException ex) {
-            logger.error("TodoService.findAll: Failed to query database", ex);
-            throw new TodoServiceException("TodoService.findAll: Failed to query database", ex);
+            logger.error("DotsService.findAll: Failed to query database", ex);
+            throw new DotsServiceException("DotsService.findAll: Failed to query database", ex);
         }
     }
 
-    /**
-     * Create a new Todo entry.
-     */
-    public void createNewTodo(String body) throws TodoServiceException {
-        Todo todo = new Gson().fromJson(body, Todo.class);
-
-        String sql = "INSERT INTO item (title, done, created_on) " +
-                     "             VALUES (:title, :done, :createdOn)" ;
-
-        try (Connection conn = db.open()) {
-            conn.createQuery(sql)
-                .bind(todo)
-                .executeUpdate();
-        } catch(Sql2oException ex) {
-            logger.error("TodoService.createNewTodo: Failed to create new entry", ex);
-            throw new TodoServiceException("TodoService.createNewTodo: Failed to create new entry", ex);
-        }
-    }
 
     /**
      * Find a todo entry given an Id.
@@ -87,7 +71,7 @@ public class TodoService {
      * @param id The id for the Todo entry
      * @return The Todo corresponding to the id if one is found, otherwise null
      */
-    public Todo find(String id) throws TodoServiceException {
+    public Todo find(String id) throws DotsServiceException {
         String sql = "SELECT * FROM item WHERE item_id = :itemId ";
 
         try (Connection conn = db.open()) {
@@ -97,15 +81,15 @@ public class TodoService {
                 .addColumnMapping("created_on", "createdOn")
                 .executeAndFetchFirst(Todo.class);
         } catch(Sql2oException ex) {
-            logger.error(String.format("TodoService.find: Failed to query database for id: %s", id), ex);
-            throw new TodoServiceException(String.format("TodoService.find: Failed to query database for id: %s", id), ex);
+            logger.error(String.format("DotsService.find: Failed to query database for id: %s", id), ex);
+            throw new DotsServiceException(String.format("DotsService.find: Failed to query database for id: %s", id), ex);
         }
     }
 
     /**
      * Update the specified Todo entry with new information
      */
-    public Todo update(String todoId, String body) throws TodoServiceException {
+    public Todo update(String todoId, String body) throws DotsServiceException {
         Todo todo = new Gson().fromJson(body, Todo.class);
 
         String sql = "UPDATE item SET title = :title, done = :done, created_on = :createdOn WHERE item_id = :itemId ";
@@ -118,12 +102,12 @@ public class TodoService {
 
             //Verify that we did indeed update something
             if (getChangedRows(conn) != 1) {
-                logger.error(String.format("TodoService.update: Update operation did not update rows. Incorrect id(?): %s", todoId));
-                throw new TodoServiceException(String.format("TodoService.update: Update operation did not update rows. Incorrect id (?): %s", todoId), null);
+                logger.error(String.format("DotsService.update: Update operation did not update rows. Incorrect id(?): %s", todoId));
+                throw new DotsServiceException(String.format("DotsService.update: Update operation did not update rows. Incorrect id (?): %s", todoId), null);
             }
         } catch(Sql2oException ex) {
-            logger.error(String.format("TodoService.update: Failed to update database for id: %s", todoId), ex);
-            throw new TodoServiceException(String.format("TodoService.update: Failed to update database for id: %s", todoId), ex);
+            logger.error(String.format("DotsService.update: Failed to update database for id: %s", todoId), ex);
+            throw new DotsServiceException(String.format("DotsService.update: Failed to update database for id: %s", todoId), ex);
         }
 
         return find(todoId);
@@ -132,7 +116,7 @@ public class TodoService {
     /**
      * Delete the entry with the specified id
      */
-    public void delete(String todoId) throws TodoServiceException {
+    public void delete(String todoId) throws DotsServiceException {
         String sql = "DELETE FROM item WHERE item_id = :itemId" ;
         try (Connection conn = db.open()) {
             //Delete the item
@@ -142,21 +126,48 @@ public class TodoService {
 
             //Verify that we did indeed change something
             if (getChangedRows(conn) != 1) {
-                logger.error(String.format("TodoService.delete: Delete operation did not delete rows. Incorrect id(?): %s", todoId));
-                throw new TodoServiceException(String.format("TodoService.delete: Delete operation did not delete rows. Incorrect id(?): %s", todoId), null);
+                logger.error(String.format("DotsService.delete: Delete operation did not delete rows. Incorrect id(?): %s", todoId));
+                throw new DotsServiceException(String.format("DotsService.delete: Delete operation did not delete rows. Incorrect id(?): %s", todoId), null);
             }
         } catch(Sql2oException ex) {
-            logger.error(String.format("TodoService.update: Failed to delete id: %s", todoId), ex);
-            throw new TodoServiceException(String.format("TodoService.update: Failed to delete id: %s", todoId), ex);
+            logger.error(String.format("DotsService.update: Failed to delete id: %s", todoId), ex);
+            throw new DotsServiceException(String.format("DotsService.update: Failed to delete id: %s", todoId), ex);
         }
+    }
+
+
+    /**
+     * Create a new Todo entry.
+     */
+    public void createNewTodo(String body) throws DotsServiceException {
+        Todo todo = new Gson().fromJson(body, Todo.class);
+
+        String sql = "INSERT INTO item (title, done, created_on) " +
+                "             VALUES (:title, :done, :createdOn)" ;
+
+        try (Connection conn = db.open()) {
+            conn.createQuery(sql)
+                    .bind(todo)
+                    .executeUpdate();
+        } catch(Sql2oException ex) {
+            logger.error("DotsService.createNewTodo: Failed to create new entry", ex);
+            throw new DotsServiceException("DotsService.createNewTodo: Failed to create new entry", ex);
+        }
+    }
+
+
+    public Game createNewGame(final String body) {
+        JsonObject requestBody = new Gson().fromJson(body, JsonObject.class);
+        game = new Game(requestBody.get("playerType").toString());
+        return game;
     }
 
     //-----------------------------------------------------------------------------//
     // Helper Classes and Methods
     //-----------------------------------------------------------------------------//
 
-    public static class TodoServiceException extends Exception {
-        public TodoServiceException(String message, Throwable cause) {
+    public static class DotsServiceException extends Exception {
+        public DotsServiceException(String message, Throwable cause) {
             super(message, cause);
         }
     }

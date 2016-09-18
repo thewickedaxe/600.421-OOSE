@@ -4,7 +4,7 @@
 //-------------------------------------------------------------------------------------------------------------//
 
 
-package com.todoapp;
+package com.srinivas.dots;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,10 +42,10 @@ public class Bootstrap {
 
         //Create the model instance and then configure and start the web service
         try {
-            TodoService model = new TodoService(dataSource);
-            new TodoController(model);
-        } catch (TodoService.TodoServiceException ex) {
-            logger.error("Failed to create a TodoService instance. Aborting");
+            DotsService model = new DotsService(dataSource);
+            new DotsController(model);
+        } catch (DotsService.DotsServiceException ex) {
+            logger.error("Failed to create a DotsService instance. Aborting");
         }
     }
 

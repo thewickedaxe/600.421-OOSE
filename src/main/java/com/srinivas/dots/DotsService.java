@@ -174,12 +174,12 @@ public class DotsService {
     public Game createNewGame(final String body) {
         JsonObject requestBody = new Gson().fromJson(body, JsonObject.class);
         game = new Game(requestBody.get("playerType").toString());
+        logger.info("Comes Here");
         return game;
     }
 
     public void checkTurnCorrectness(final String id, final int row, final int col, final String nature)
             throws IncorrectTurnException {
-
         if (!game.getWhoseTurn().equals(game.getPlayerColor(id))) {
             throw new IncorrectTurnException("Not your turn!!");
         }
@@ -190,6 +190,7 @@ public class DotsService {
             } else {
                 game.setVerticalLine(row, col);
             }
+
         } else if (nature.equals(Constants.HORIZONTAL)) {
             Line l = game.getHorizontalLine(row, col);
             if (l.isFilled()) {
@@ -207,6 +208,9 @@ public class DotsService {
 
     public Game getState(final String id) throws IncorrectGameIDException {
         checkGameId(id);
+        if (game.validateFinish()) {
+            game.setState(Constants.FINISHED);
+        }
         return game;
     }
 
@@ -222,10 +226,66 @@ public class DotsService {
         boolean scoreFlag = false;
         if (nature.equals(Constants.VERTICAL)) {
             if (col > 0) {
-                Line leftTop = game.getHorizontalLine(row , col - 1);
-                Line leftBot = game.getHorizontalLine(row + 1, col - 1);
-                Line left = game.getVerticalLine(row, col - 1);
-                if ()
+                if (game.getHorizontalLine(row, col - 1).isFilled() &&
+                    game.getHorizontalLine(row + 1, col - 1).isFilled() &&
+                    game.getVerticalLine(row, col - 1).isFilled()) {
+                    scoreFlag = true;
+                    if (game.getWhoseTurn().equals(Constants.RED)) {
+                        game.setRedScore(game.getRedScore() + 1);
+                    } else if (game.getWhoseTurn().equals(Constants.BLUE)) {
+                        game.setBlueScore(game.getBlueScore() + 1);
+                    }
+                    game.setBox(row, col - 1, game.getWhoseTurn());
+                }
+            }
+            if (col < Constants.VCOLS - 1) {
+                if (game.getHorizontalLine(row, col).isFilled() &&
+                        game.getHorizontalLine(row + 1, col).isFilled() &&
+                        game.getVerticalLine(row, col + 1).isFilled()) {
+                    scoreFlag = true;
+                    if (game.getWhoseTurn().equals(Constants.RED)) {
+                        game.setRedScore(game.getRedScore() + 1);
+                    } else if (game.getWhoseTurn().equals(Constants.BLUE)) {
+                        game.setBlueScore(game.getBlueScore() + 1);
+                    }
+                    game.setBox(row, col, game.getWhoseTurn());
+                }
+            }
+            if (scoreFlag) {
+                flipTurns();
+            }
+            return;
+        } else if (nature.equals(Constants.HORIZONTAL)) {
+            if (row > 0) {
+                if (game.getHorizontalLine(row - 1, col).isFilled() &&
+                        game.getVerticalLine(row - 1, col).isFilled() &&
+                        game.getVerticalLine(row - 1, col + 1).isFilled()) {
+                    scoreFlag = true;
+                    if (game.getWhoseTurn().equals(Constants.RED)) {
+                        game.setRedScore(game.getRedScore() + 1);
+                    } else if (game.getWhoseTurn().equals(Constants.BLUE)) {
+                        game.setBlueScore(game.getBlueScore() + 1);
+                    }
+                    game.setBox(row - 1, col, game.getWhoseTurn());
+                }
+            }
+            if (row < Constants.HROWS - 1) {
+                if (game.getHorizontalLine(row + 1, col).isFilled() &&
+                        game.getVerticalLine(row, col).isFilled() &&
+                        game.getVerticalLine(row, col + 1).isFilled()) {
+                    scoreFlag = true;
+                    if (game.getWhoseTurn().equals(Constants.RED)) {
+                        game.setRedScore(game.getRedScore() + 1);
+                    } else if (game.getWhoseTurn().equals(Constants.BLUE)) {
+                        game.setBlueScore(game.getBlueScore() + 1);
+                    }
+                    game.setBox(row, col, game.getWhoseTurn());
+                }
+            }
+            if (scoreFlag) {
+                flipTurns();
+            }
+            return;
         }
     }
 
@@ -238,10 +298,10 @@ public class DotsService {
                 Integer.parseInt(requestBody.get("row").toString().replace("\"", "")),
                 Integer.parseInt(requestBody.get("col").toString().replace("\"", "")),
                 Constants.VERTICAL);
-        flipTurns();
         recalcScores(Integer.parseInt(requestBody.get("row").toString().replace("\"", "")),
-                     Integer.parseInt(requestBody.get("col").toString().replace("\"", "")),
-                     Constants.VERTICAL);
+                Integer.parseInt(requestBody.get("col").toString().replace("\"", "")),
+                Constants.VERTICAL);
+        flipTurns();
         return game;
     }
 
@@ -253,6 +313,9 @@ public class DotsService {
         checkTurnCorrectness(requestBody.get("playerId").toString().replace("\"", ""),
                 Integer.parseInt(requestBody.get("row").toString().replace("\"", "")),
                 Integer.parseInt(requestBody.get("col").toString().replace("\"", "")),
+                Constants.HORIZONTAL);
+        recalcScores(Integer.parseInt(requestBody.get("row").toString().replace("\"", "")),
+               Integer.parseInt(requestBody.get("col").toString().replace("\"", "")),
                 Constants.HORIZONTAL);
         flipTurns();
         return game;

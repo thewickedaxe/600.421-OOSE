@@ -18,8 +18,8 @@ public class Game {
     private int blueScore;
     private String whoseTurn;
     private String state;
-    private Line horizontalLines[] = new Line[Constants.NUM_BOXES];
-    private Line verticalLines[] = new Line[Constants.NUM_BOXES];
+    private Line horizontalLines[] = new Line[Constants.HROWS * Constants.HCOLS];
+    private Line verticalLines[] = new Line[Constants.VROWS * Constants.VCOLS];
     private Box boxes[] = new Box[Constants.NUM_BOXES];
 
     public Game(final String pType) {
@@ -35,7 +35,9 @@ public class Game {
         for (int i =0; i < Constants.HROWS; i++) {
             for (int j = 0; j < Constants.HCOLS; j++) {
                 horizontalLines[k] = new Line(i, j, false);
-                boxes[k] = new Box(i, j, Constants.NONE_OWNER);
+                if (k < Constants.NUM_BOXES) {
+                    boxes[k] = new Box(i, j, Constants.NONE_OWNER);
+                }
                 k++;
             }
         }
@@ -46,6 +48,7 @@ public class Game {
                 k++;
             }
         }
+        System.out.println("Comes here too!");
     }
 
     public String getGameId() {
@@ -76,6 +79,15 @@ public class Game {
         return playerType;
     }
 
+    public boolean validateFinish() {
+        for (Box b : boxes) {
+            if (!b.isOwned()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     public void setPlayerType(final String playerType) {
         this.playerType = playerType;
     }
@@ -101,6 +113,17 @@ public class Game {
 
     public int getRedScore() {
         return redScore;
+    }
+
+    public void setBox(final int row, final int col, final String owner) {
+        for (int i = 0; i < Constants.NUM_BOXES; i++) {
+            if (boxes[i].getRow() == row) {
+                if (boxes[i].getCol() == col) {
+                    boxes[i].setOwner(owner);
+                    boxes[i].setOwned(true);
+                }
+            }
+        }
     }
 
     public void setRedScore(final int redScore) {
@@ -232,11 +255,6 @@ class Box {
     private boolean owned;
     private String owner;
 
-    private Line top;
-    private Line bot;
-    private Line left;
-    private Line right;
-
     public Box(final int row, final int col, final String owner) {
         this.row = row;
         this.col = col;
@@ -268,45 +286,6 @@ class Box {
         this.owned = owned;
     }
 
-    public Line getTop() {
-        return top;
-    }
-
-    public void setTop(Line top) {
-        this.top.setRow(top.getRow());
-        this.top.setCol(top.getCol());
-        this.top.setFilled(top.isFilled());
-    }
-
-    public Line getBot() {
-        return bot;
-    }
-
-    public void setBot(Line bot) {
-        this.bot.setRow(bot.getRow());
-        this.bot.setCol(bot.getCol());
-        this.bot.setFilled(bot.isFilled());
-    }
-
-    public Line getLeft() {
-        return left;
-    }
-
-    public void setLeft(Line left) {
-        this.left.setRow(left.getRow());
-        this.left.setCol(left.getCol());
-        this.left.setFilled(left.isFilled());
-    }
-
-    public Line getRight() {
-        return right;
-    }
-
-    public void setRight(Line right) {
-        this.right.setRow(right.getRow());
-        this.right.setCol(right.getCol());
-        this.right.setFilled(right.isFilled());
-    }
 }
 
 class GenericResponse {

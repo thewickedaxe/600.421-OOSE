@@ -15,8 +15,13 @@ public class Constants {
     public static final String FINISHED = "FINISHED";
     public static final String RED = "RED";
     public static final String BLUE = "BLUE";
-    public static final int HROWS = 4;
-    public static final int HCOLS = 3;
-    public static final int VROWS = 3;
-    public static final int VCOLS = 4;
+    public static final int HROWS = 5;
+    public static final int HCOLS = 5;
+    public static final int VROWS = 5;
+    public static final int VCOLS = 5;
+    public static final int NUM_BOXES = 16;
+    public static final int MAX_PLAYER_COUNT = 2;
+    public static final String NONE_OWNER = "NONE";
+    public static final String VERTICAL = "Vertical";
+    public static final String HORIZONTAL = "Horizontal";
 }

@@ -44,7 +44,7 @@ public class Bootstrap {
         try {
             DotsService model = new DotsService(dataSource);
             new DotsController(model);
-        } catch (DotsService.DotsServiceException ex) {
+        } catch (DotsService.IncorrectGameIDException ex) {
             logger.error("Failed to create a DotsService instance. Aborting");
         }
     }

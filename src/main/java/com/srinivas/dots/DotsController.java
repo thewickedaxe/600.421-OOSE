@@ -27,26 +27,6 @@ public class DotsController {
 
     private void setupEndpoints() {
 
-        /*
-         POST: /games/:gameId/vmove
-
-         Requests to make a move for a vertical line.
-
-         Params:
-              gameId: <String>, the ID of the current game.
-         Body:
-              playerId: <String>, the ID of the player making the request.
-              row: <Number> The y-index of the requested line.
-              col: <Number> The x-index of the requested line.
-
-         Success: 200 (Success, OK)
-
-         Failure:
-              404 (Invalid game ID)
-              404 (Invalid player ID)
-              422 (Incorrect turn / not this player's turn)
-              422 (Illegal move)
-         */
         post(API_CONTEXT + "/games", "application/json", (request, response) -> {
             response.status(201);
             return dotsService.createNewGame(request.body());
@@ -108,17 +88,6 @@ public class DotsController {
             }
             return Collections.EMPTY_MAP;
         }, new JsonTransformer());
-
-        get(API_CONTEXT + "/todos/:id", "application/json", (request, response) -> {
-            try {
-                return dotsService.find(request.params(":id"));
-            } catch (DotsService.IncorrectGameIDException ex) {
-                logger.error(String.format("Failed to find object with id: %s", request.params(":id")));
-                response.status(500);
-                return Collections.EMPTY_MAP;
-            }
-        }, new JsonTransformer());
-
 
     }
 }

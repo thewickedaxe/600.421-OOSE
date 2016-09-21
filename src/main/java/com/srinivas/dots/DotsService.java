@@ -17,9 +17,7 @@ import javax.sql.DataSource;
 import java.util.List;
 
 public class DotsService {
-
-    private Sql2o db;
-    public Game game;
+    public GameFactory gameFactory;
 
     private final Logger logger = LoggerFactory.getLogger(DotsService.class);
 
@@ -29,33 +27,26 @@ public class DotsService {
      *
      */
     public DotsService( ) {
-
+        gameFactory = new GameFactory();
     }
 
-    public void checkGameId(final String id) throws IncorrectGameIDException {
-        String tempid = id.replace("\"", "");
-        if (!tempid.equals(game.getGameId())) {
-            logger.error("Bad Game ID: " + id);
-            throw new IncorrectGameIDException("Incorrect game ID queried");
-        }
-    }
-
-    public void checkPlayerId(final String id) throws PlayerMismatchException {
+    public Game checkPlayerId(final String id, final Game game) throws PlayerMismatchException {
         String tempid = id.replace("\"", "");
         if (!tempid.equals(game.getPlayerId()) && !tempid.equals(game.getPlayerId2())) {
             logger.error("Bad Player ID: " + id);
             throw new PlayerMismatchException("Incorrect playerID!");
         }
+        return game;
     }
 
-    public Game createNewGame(final String body) {
+    public Game createNewGame(final String body) throws TooManyGamesException {
         JsonObject requestBody = new Gson().fromJson(body, JsonObject.class);
-        game = new Game(requestBody.get("playerType").toString());
+        Game game = gameFactory.createGame(requestBody.get("playerType").toString());
         logger.info("Comes Here");
         return game;
     }
 
-    public void checkTurnCorrectness(final String id, final int row, final int col, final String nature)
+    public Game checkTurnCorrectness(final String id, final int row, final int col, final String nature, final Game game)
             throws IncorrectTurnException {
         if (!game.getWhoseTurn().equals(game.getPlayerColor(id))) {
             throw new IncorrectTurnException("Not your turn!!");
@@ -76,30 +67,33 @@ public class DotsService {
                 game.setHorizontalLine(row, col);
             }
         }
+        return game;
     }
 
     public Game getBoard(final String id) throws IncorrectGameIDException {
-        checkGameId(id);
+        Game game = gameFactory.queryGame(id);
         return game;
     }
 
     public Game getState(final String id) throws IncorrectGameIDException {
-        checkGameId(id);
+        Game game = gameFactory.queryGame(id);
         if (game.validateFinish()) {
             game.setState(Constants.FINISHED);
         }
+        gameFactory.setGame(game);
         return game;
     }
 
-    public void flipTurns() {
+    public Game flipTurns(final Game game) {
         if (game.getWhoseTurn().equals(Constants.RED)) {
             game.setWhoseTurn(Constants.BLUE);
         } else {
             game.setWhoseTurn(Constants.RED);
         }
+        return game;
     }
 
-    private void recalcScores(final int row, final int col, final String nature) {
+    private Game recalcScores(final int row, final int col, final String nature, Game game) {
         boolean scoreFlag = false;
         if (nature.equals(Constants.VERTICAL)) {
             if (col > 0) {
@@ -129,9 +123,9 @@ public class DotsService {
                 }
             }
             if (scoreFlag) {
-                flipTurns();
+                game = flipTurns(game);
             }
-            return;
+            return game;
         } else if (nature.equals(Constants.HORIZONTAL)) {
             if (row > 0) {
                 if (game.getHorizontalLine(row - 1, col).isFilled() &&
@@ -160,46 +154,49 @@ public class DotsService {
                 }
             }
             if (scoreFlag) {
-                flipTurns();
+                game = flipTurns(game);
             }
-            return;
+            return game;
         }
+        return game;
     }
 
     public Game makeVmove(final String id, final String body)
             throws IncorrectGameIDException, PlayerMismatchException, IncorrectTurnException {
-        checkGameId(id);
+        Game game = gameFactory.queryGame(id);
         JsonObject requestBody = new Gson().fromJson(body, JsonObject.class);
-        checkPlayerId(requestBody.get("playerId").toString());
-        checkTurnCorrectness(requestBody.get("playerId").toString().replace("\"", ""),
+        game = checkPlayerId(requestBody.get("playerId").toString(), game);
+        game = checkTurnCorrectness(requestBody.get("playerId").toString().replace("\"", ""),
                 Integer.parseInt(requestBody.get("row").toString().replace("\"", "")),
                 Integer.parseInt(requestBody.get("col").toString().replace("\"", "")),
-                Constants.VERTICAL);
-        recalcScores(Integer.parseInt(requestBody.get("row").toString().replace("\"", "")),
+                Constants.VERTICAL, game);
+        game = recalcScores(Integer.parseInt(requestBody.get("row").toString().replace("\"", "")),
                 Integer.parseInt(requestBody.get("col").toString().replace("\"", "")),
-                Constants.VERTICAL);
-        flipTurns();
+                Constants.VERTICAL, game);
+        game = flipTurns(game);
+        gameFactory.setGame(game);
         return game;
     }
 
     public Game makeHmove(final String id, final String body)
             throws IncorrectGameIDException, PlayerMismatchException, IncorrectTurnException {
-        checkGameId(id);
+        Game game = gameFactory.queryGame(id);
         JsonObject requestBody = new Gson().fromJson(body, JsonObject.class);
-        checkPlayerId(requestBody.get("playerId").toString());
-        checkTurnCorrectness(requestBody.get("playerId").toString().replace("\"", ""),
+        game  = checkPlayerId(requestBody.get("playerId").toString(), game);
+        game = checkTurnCorrectness(requestBody.get("playerId").toString().replace("\"", ""),
                 Integer.parseInt(requestBody.get("row").toString().replace("\"", "")),
                 Integer.parseInt(requestBody.get("col").toString().replace("\"", "")),
-                Constants.HORIZONTAL);
-        recalcScores(Integer.parseInt(requestBody.get("row").toString().replace("\"", "")),
+                Constants.HORIZONTAL, game);
+        game = recalcScores(Integer.parseInt(requestBody.get("row").toString().replace("\"", "")),
                Integer.parseInt(requestBody.get("col").toString().replace("\"", "")),
-                Constants.HORIZONTAL);
-        flipTurns();
+                Constants.HORIZONTAL, game);
+        game = flipTurns(game);
+        gameFactory.setGame(game);
         return game;
     }
 
     public GenericResponse joinGame(final String id) throws IncorrectGameIDException, PlayerOverflowException {
-        checkGameId(id);
+        Game game = gameFactory.queryGame(id);
         if (game.getPlayerCount() == Constants.MAX_PLAYER_COUNT) {
             logger.error("2 people are already playing the game");
             throw new PlayerOverflowException("2 people are already playing!!");
@@ -212,6 +209,7 @@ public class DotsService {
         } else if (game.getPlayerType().equals(Constants.BLUE)) {
             game.setPlayerType2(Constants.RED);
         }
+        gameFactory.setGame(game);
         logger.debug("Player Type1: " + game.getPlayerType());
         logger.debug("Player Type2: " + game.getPlayerType2());
         GenericResponse r = new GenericResponse(game.getPlayerType2(), game.getPlayerId2(), game.getGameId());

@@ -22,8 +22,8 @@ public class Game {
     private Line verticalLines[] = new Line[Constants.VROWS * Constants.VCOLS];
     private Box boxes[] = new Box[Constants.NUM_BOXES];
 
-    public Game(final String pType) {
-        this.gameId = Constants.GAMEID;
+    public Game(final String pType, final String tgameid) {
+        this.gameId = tgameid;
         System.out.println("GameId: " + this.gameId);
         this.playerId = Constants.PID1;
         this.playerId2 = Constants.PID2;

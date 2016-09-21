@@ -18,6 +18,8 @@ public class Constants {
     public static final int HROWS = 5;
     public static final int HCOLS = 4;
     public static final int VROWS = 4;
+    public static int MAX_CONCURRENT_GAMES = 3;
+    public static String PLACEHOLDER = "foo";
     public static final int VCOLS = 5;
     public static final int NUM_BOXES = 16;
     public static final int MAX_PLAYER_COUNT = 2;

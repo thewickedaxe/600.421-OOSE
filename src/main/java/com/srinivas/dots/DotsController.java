@@ -29,7 +29,13 @@ public class DotsController {
 
         post(API_CONTEXT + "/games", "application/json", (request, response) -> {
             response.status(201);
-            return dotsService.createNewGame(request.body());
+            try {
+                return dotsService.createNewGame(request.body());
+            } catch (TooManyGamesException e) {
+                logger.error("Too many concurrent games");
+                response.status(404);
+                return Collections.EMPTY_MAP;
+            }
         }, new JsonTransformer());
 
         post(API_CONTEXT + "/games/:gameID/vmove", "application/json", (request, response) -> {

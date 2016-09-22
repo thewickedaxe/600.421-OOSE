@@ -12,6 +12,9 @@ import java.util.Collections;
 
 import static spark.Spark.*;
 
+/**
+ * A controller for DOTS.
+ */
 public class DotsController {
 
     private static final String API_CONTEXT = "/dots/api";
@@ -20,11 +23,18 @@ public class DotsController {
 
     private final Logger logger = LoggerFactory.getLogger(DotsController.class);
 
+    /**
+     * Dots controller's constructor.
+     * @param dotsService the service that will help the controller
+     */
     public DotsController(DotsService dotsService) {
         this.dotsService = dotsService;
         setupEndpoints();
     }
 
+    /**
+     * Spark java and it's quirky yet awesome syntactic sugar.
+     */
     private void setupEndpoints() {
 
         post(API_CONTEXT + "/games", "application/json", (request, response) -> {
